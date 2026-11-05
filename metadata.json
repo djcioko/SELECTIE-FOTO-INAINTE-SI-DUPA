@@ -1,0 +1,6 @@
+{
+  "name": "MetalCraft Compare - Înainte & După Confecții Metalice",
+  "description": "Aplicație profesională pentru compararea pozelor de confecții metalice (În lucru / Atelier vs. Final / Montat) cu export de colaje de înaltă rezoluție.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
