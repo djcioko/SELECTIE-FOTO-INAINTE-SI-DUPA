@@ -14,6 +14,8 @@ import {
   Check,
   AlertCircle,
   ClipboardPaste,
+  FolderArchive,
+  FolderDown,
 } from 'lucide-react';
 import { PhotoItem } from '../types';
 import { importExternalAlbum } from '../utils/aiAnalysis';
@@ -30,6 +32,8 @@ interface UploadZoneProps {
   onClearAllPhotos: () => void;
   onAnalyze?: () => void;
   isAnalyzing?: boolean;
+  onExportZip?: () => void;
+  isZipping?: boolean;
 }
 
 export const UploadZone: React.FC<UploadZoneProps> = ({
@@ -44,6 +48,8 @@ export const UploadZone: React.FC<UploadZoneProps> = ({
   onClearAllPhotos,
   onAnalyze,
   isAnalyzing,
+  onExportZip,
+  isZipping,
 }) => {
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
@@ -153,8 +159,8 @@ export const UploadZone: React.FC<UploadZoneProps> = ({
           </div>
         </div>
 
-        {/* Top actions: Analyze button + Clear button */}
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        {/* Top actions: Analyze button + ZIP Export button + Clear button */}
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
           {onAnalyze && photos.length > 0 && (
             <button
               onClick={onAnalyze}
@@ -164,6 +170,19 @@ export const UploadZone: React.FC<UploadZoneProps> = ({
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>{isAnalyzing ? 'Se analizează...' : 'Analizează cu Gemini'}</span>
+            </button>
+          )}
+
+          {onExportZip && photos.length > 0 && (
+            <button
+              onClick={onExportZip}
+              disabled={isZipping}
+              type="button"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/40 hover:border-emerald-400 font-extrabold text-xs shadow transition cursor-pointer"
+              title="Descarcă toate pozele într-o arhivă ZIP separată în 2 foldere: Atelier și Montaj"
+            >
+              <FolderArchive className="w-3.5 h-3.5" />
+              <span>{isZipping ? 'Se arhivează...' : 'Descarcă ZIP (2 Foldere)'}</span>
             </button>
           )}
 

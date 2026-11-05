@@ -14,6 +14,7 @@ import {
   PanelRightClose,
   PanelRightOpen,
   Sparkles,
+  FolderArchive,
 } from 'lucide-react';
 import { Header } from './components/Header';
 import { UploadZone } from './components/UploadZone';
@@ -22,6 +23,7 @@ import { CollageCanvas } from './components/CollageCanvas';
 import { SplitSliderPreview } from './components/SplitSliderPreview';
 import { ControlsPanel } from './components/ControlsPanel';
 import { GeminiAnalysisSection } from './components/GeminiAnalysisSection';
+import { ZipExportModal } from './components/ZipExportModal';
 import { SAMPLE_PROJECTS } from './data/sampleProjects';
 import {
   PhotoItem,
@@ -32,6 +34,11 @@ import {
 } from './types';
 import { downloadCollage, copyCollageToClipboard } from './utils/exportImage';
 import { analyzePhotosWithGemini } from './utils/aiAnalysis';
+import {
+  exportPhotosSeparatedZip,
+  ZipExportProgress,
+  ZipExportResult,
+} from './utils/zipArchive';
 
 const DEFAULT_ADJUSTMENTS: SlotAdjustments = {
   zoom: 1.0,
@@ -114,6 +121,12 @@ export default function App() {
 
   const [analyses, setAnalyses] = useState<PhotoAnalysis[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  // ZIP export state for separated folders
+  const [isZipping, setIsZipping] = useState(false);
+  const [zipProgress, setZipProgress] = useState<ZipExportProgress | null>(null);
+  const [zipResult, setZipResult] = useState<ZipExportResult | null>(null);
+  const [isZipModalOpen, setIsZipModalOpen] = useState(false);
 
   const leftPhoto = photos.find((p) => p.id === leftPhotoId) || null;
   const rightPhoto = photos.find((p) => p.id === rightPhotoId) || null;
@@ -421,6 +434,41 @@ export default function App() {
     }
   };
 
+  // Export all uploaded photos separated into 2 folders: In_Lucru_Atelier and Final_Montat_Client
+  const handleExportZip = async () => {
+    if (photos.length === 0) {
+      showToast('Încarcă mai întâi câteva poze pentru a crea arhiva ZIP.');
+      return;
+    }
+
+    setIsZipping(true);
+    setIsZipModalOpen(true);
+    setZipResult(null);
+    setZipProgress({
+      current: 1,
+      total: photos.length,
+      filename: 'Pregătire foldere atelier & montaj...',
+      percent: 5,
+      phase: 'preparing',
+    });
+
+    try {
+      const res = await exportPhotosSeparatedZip(photos, analyses, (progress) => {
+        setZipProgress(progress);
+      });
+      setZipResult(res);
+      showToast(
+        `✓ Arhiva ZIP a fost descărcată pe laptop! (${res.inLucruCount} în lucru, ${res.finalCount} montate la client)`
+      );
+    } catch (err: any) {
+      console.error('Eroare export ZIP:', err);
+      showToast('Eroare la crearea arhivei ZIP: ' + (err.message || 'Necunoscut'));
+      setIsZipModalOpen(false);
+    } finally {
+      setIsZipping(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-['Plus_Jakarta_Sans']">
       {/* Toast notification */}
@@ -436,10 +484,13 @@ export default function App() {
         onSelectPreset={handleSelectPreset}
         onReset={handleReset}
         onExport={handleExport}
+        onExportZip={handleExportZip}
         onCopyClipboard={handleCopyClipboard}
         isExporting={isExporting}
+        isZipping={isZipping}
         copiedSuccess={copiedSuccess}
         hasBothImages={hasBothImages}
+        photosCount={photos.length}
       />
 
       {/* Main Workspace */}
@@ -454,6 +505,8 @@ export default function App() {
             onApplyBest={handleApplyBest}
             onAssignToLeft={handleAssignToLeft}
             onAssignToRight={handleAssignToRight}
+            onExportZip={handleExportZip}
+            isZipping={isZipping}
             leftPhotoId={leftPhotoId}
             rightPhotoId={rightPhotoId}
           />
@@ -770,6 +823,8 @@ export default function App() {
                     onClearAllPhotos={handleClearAllPhotos}
                     onAnalyze={handleAnalyzePhotos}
                     isAnalyzing={isAnalyzing}
+                    onExportZip={handleExportZip}
+                    isZipping={isZipping}
                   />
                 </div>
               )}
@@ -817,6 +872,18 @@ export default function App() {
                     <span>{copiedSuccess ? 'Copiat!' : 'Copiază'}</span>
                   </button>
                 </div>
+
+                {/* Buton descărcare toate pozele în arhivă ZIP cu 2 foldere */}
+                <button
+                  onClick={handleExportZip}
+                  disabled={photos.length === 0 || isZipping}
+                  type="button"
+                  className="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-750 border border-emerald-500/40 hover:border-emerald-400 text-emerald-300 hover:text-white font-extrabold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow disabled:opacity-40"
+                  title="Descarcă toate pozele în două foldere separate: În lucru (Atelier) și Final (Montat la client)"
+                >
+                  <FolderArchive className="w-4 h-4 text-emerald-400" />
+                  <span>{isZipping ? 'Se generează arhiva...' : 'Descarcă Arhivă ZIP (2 Foldere)'}</span>
+                </button>
               </div>
             </div>
           </div>
@@ -837,6 +904,8 @@ export default function App() {
               onClearAllPhotos={handleClearAllPhotos}
               onAnalyze={handleAnalyzePhotos}
               isAnalyzing={isAnalyzing}
+              onExportZip={handleExportZip}
+              isZipping={isZipping}
             />
           </section>
         )}
@@ -861,14 +930,23 @@ export default function App() {
               </p>
             </div>
             <div className="space-y-1">
-              <span className="font-semibold text-amber-300">3. Click pe poze din listă</span>
+              <span className="font-semibold text-amber-300">3. Foldere separate în ZIP</span>
               <p className="text-[11px] leading-relaxed">
-                Dă click pe oricare poză din lista de jos pentru a deschide butoanele &bdquo;Pune în stânga&rdquo; și &bdquo;Pune în dreapta&rdquo;.
+                Apasă &bdquo;Descarcă Arhivă ZIP&rdquo; pentru a salva direct pe laptop toate pozele împărțite în folderul &bdquo;In_Lucru_Atelier&rdquo; și &bdquo;Final_Montat_Client&rdquo;.
               </p>
             </div>
           </div>
         </section>
       </main>
+
+      {/* Modal progres și finalizare arhivă ZIP */}
+      <ZipExportModal
+        isOpen={isZipModalOpen}
+        onClose={() => setIsZipModalOpen(false)}
+        progress={zipProgress}
+        result={zipResult}
+        isZipping={isZipping}
+      />
 
       {/* Footer */}
       <footer className="border-t border-slate-800/80 py-4 bg-slate-950 text-slate-400 text-center text-xs">

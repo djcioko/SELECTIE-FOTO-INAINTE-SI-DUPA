@@ -7,20 +7,26 @@ interface HeaderProps {
   onSelectPreset: (preset: PresetProject) => void;
   onReset: () => void;
   onExport: () => void;
+  onExportZip?: () => void;
   onCopyClipboard: () => void;
   isExporting: boolean;
+  isZipping?: boolean;
   copiedSuccess: boolean;
   hasBothImages: boolean;
+  photosCount?: number;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onSelectPreset,
   onReset,
   onExport,
+  onExportZip,
   onCopyClipboard,
   isExporting,
+  isZipping,
   copiedSuccess,
   hasBothImages,
+  photosCount = 0,
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-800 text-slate-100 shadow-xl">
@@ -102,7 +108,22 @@ export const Header: React.FC<HeaderProps> = ({
             <span>{copiedSuccess ? '✓ Copiat!' : 'Copiază'}</span>
           </button>
 
-          {/* Download CTA */}
+          {/* ZIP Archive Button: Separate into 2 Folders */}
+          {onExportZip && photosCount > 0 && (
+            <button
+              onClick={onExportZip}
+              disabled={isZipping}
+              type="button"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-white shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 cursor-pointer"
+              title="Descarcă toate pozele într-o arhivă ZIP separată în 2 foldere: Atelier și Montaj"
+            >
+              <FolderOpen className="w-3.5 h-3.5 text-emerald-200" />
+              <span className="hidden md:inline">Arhivă ZIP (2 Foldere)</span>
+              <span className="md:hidden">ZIP</span>
+            </button>
+          )}
+
+          {/* Download Collage CTA */}
           <button
             onClick={onExport}
             disabled={!hasBothImages || isExporting}

@@ -11,6 +11,9 @@ import {
   AlertCircle,
   ChevronDown,
   ChevronUp,
+  FolderArchive,
+  FolderDown,
+  Folder,
 } from 'lucide-react';
 import { PhotoItem, PhotoAnalysis } from '../types';
 
@@ -22,6 +25,8 @@ interface GeminiAnalysisSectionProps {
   onApplyBest: () => void;
   onAssignToLeft: (photo: PhotoItem) => void;
   onAssignToRight: (photo: PhotoItem) => void;
+  onExportZip?: () => void;
+  isZipping?: boolean;
   leftPhotoId: string | null;
   rightPhotoId: string | null;
 }
@@ -34,6 +39,8 @@ export const GeminiAnalysisSection: React.FC<GeminiAnalysisSectionProps> = ({
   onApplyBest,
   onAssignToLeft,
   onAssignToRight,
+  onExportZip,
+  isZipping,
   leftPhotoId,
   rightPhotoId,
 }) => {
@@ -119,6 +126,20 @@ export const GeminiAnalysisSection: React.FC<GeminiAnalysisSectionProps> = ({
             </button>
           )}
 
+          {/* Buton "Descarcă ZIP (2 Foldere)" */}
+          {onExportZip && photos.length > 0 && (
+            <button
+              onClick={onExportZip}
+              disabled={isZipping}
+              type="button"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/40 hover:border-emerald-400 font-extrabold text-xs sm:text-sm shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 cursor-pointer"
+              title="Descarcă toate pozele împărțite în 2 foldere: În lucru / Atelier și Final / Montat la client"
+            >
+              <FolderArchive className="w-4 h-4 text-emerald-400" />
+              <span>{isZipping ? 'Se arhivează...' : 'Descarcă ZIP (2 Foldere)'}</span>
+            </button>
+          )}
+
           {hasAnalyses && (
             <button
               onClick={() => setIsExpanded(!isExpanded)}
@@ -155,6 +176,36 @@ export const GeminiAnalysisSection: React.FC<GeminiAnalysisSectionProps> = ({
             <span className="text-[11px] text-emerald-400 font-medium">
               ✓ Prag permisiv: acceptă orice poză de la 40% claritate în sus
             </span>
+          </div>
+
+          {/* Banner Separare Foldere pentru Descărcare pe Laptop */}
+          <div className="bg-slate-950/80 rounded-xl border border-slate-800 p-3 sm:px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
+                <FolderArchive className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="font-bold text-slate-200">
+                  Separare pregătită pentru descărcare pe laptop (format arhivă ZIP):
+                </div>
+                <div className="text-[11px] text-slate-400 flex flex-wrap items-center gap-2 mt-0.5">
+                  <span className="text-amber-400 font-semibold">📁 In_Lucru_Atelier/ ({inLucruItems.length} poze)</span>
+                  <span>•</span>
+                  <span className="text-emerald-400 font-semibold">📁 Final_Montat_Client/ ({finalItems.length} poze)</span>
+                </div>
+              </div>
+            </div>
+            {onExportZip && (
+              <button
+                onClick={onExportZip}
+                disabled={isZipping}
+                type="button"
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-black text-xs shadow-md transition active:scale-95 disabled:opacity-50 cursor-pointer self-start sm:self-auto whitespace-nowrap"
+              >
+                <FolderDown className="w-4 h-4" />
+                <span>Descarcă Arhivă ZIP</span>
+              </button>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
